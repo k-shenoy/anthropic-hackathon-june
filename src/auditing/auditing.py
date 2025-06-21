@@ -138,6 +138,8 @@ class AuditingLoop:
             # Don't run auditor on the last turn
             if turn < self.num_turns - 1:
                 auditing_output = await self.auditor.run_step(agent_output)
+                if "END CONVERSATION" in auditing_output:
+                    break
 
         return ConversationResult(
             agent_transcript=self.agent.transcript,
