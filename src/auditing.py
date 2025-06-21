@@ -5,12 +5,6 @@ from safetytooling.apis import InferenceAPI
 from safetytooling.data_models import ChatMessage, Prompt, MessageRole
 
 
-class ValidationProtocol(Protocol):
-    """Protocol for validation functions"""
-
-    def __call__(self, text: str) -> bool: ...
-
-
 @dataclass
 class ConversationResult:
     """Container for conversation results"""
@@ -23,9 +17,8 @@ class ConversationResult:
 class Transcript:
     """Manages conversation history with validation"""
 
-    def __init__(self, system_prompt: str, validation_fn: Optional[ValidationProtocol] = None):
+    def __init__(self, system_prompt: str):
         self.messages = [ChatMessage(role=MessageRole.system, content=system_prompt)]
-        self.validation_fn = validation_fn or (lambda x: True)
 
     def add_user_message(self, user_message: str) -> None:
         """Add a user message to the transcript"""
@@ -42,10 +35,6 @@ class Transcript:
     def get_prompt(self) -> Prompt:
         """Get prompt object for API calls"""
         return Prompt(messages=self.messages)
-
-    def is_valid_formatting(self, text: str) -> bool:
-        """Check if text meets formatting requirements"""
-        return self.validation_fn(text)
 
     def get_last_assistant_message(self) -> Optional[str]:
         """Get the most recent assistant message"""
@@ -64,28 +53,28 @@ class ConversationParticipant:
         model_id: str,
         api: InferenceAPI,
         system_prompt: str,
-        validation_fn: Optional[ValidationProtocol] = None,
+        **api_kwargs,
     ):
         self.name = name
         self.model_id = model_id
         self.api = api
-        self.validation_fn = validation_fn
         self.system_prompt = system_prompt
-        self.transcript = Transcript(system_prompt, validation_fn)
+        self.api_kwargs = api_kwargs
+        self.transcript = Transcript(system_prompt)
 
     async def _generate_response(self, user_message: str) -> str:
         """Generate response using the API"""
         self.transcript.add_user_message(user_message)
         prompt = self.transcript.get_prompt()
 
-        response = await self.api(
-            prompt=prompt,
-            model_id=self.model_id,
-            temperature=1.0,
-            #is_valid_formatting=self.transcript.is_valid_formatting,
-        )
+        if "thinking" in self.api_kwargs:
+            response = await self.api(prompt=prompt, model_id=self.model_id, **self.api_kwargs)
+            reasoning = response[0].reasoning_content
+            completion = f"<think>\n{reasoning}\n</think>\n{response[0].completion}"
+        else:
+            response = await self.api(prompt=prompt, model_id=self.model_id, **self.api_kwargs)
+            completion = response[0].completion
 
-        completion = response[0].completion
         self.transcript.add_assistant_message(completion)
         return completion
 
@@ -93,12 +82,8 @@ class ConversationParticipant:
 class Auditor(ConversationParticipant):
     """Auditor that initiates and guides conversations"""
 
-    def __init__(
-        self, model_id: str, api: InferenceAPI, system_prompt: str, validation_fn: Optional[ValidationProtocol] = None
-    ):
-        super().__init__(
-            name="Auditor", model_id=model_id, api=api, system_prompt=system_prompt, validation_fn=validation_fn
-        )
+    def __init__(self, model_id: str, api: InferenceAPI, system_prompt: str, **kwargs):
+        super().__init__(name="Auditor", model_id=model_id, api=api, system_prompt=system_prompt, **kwargs)
 
     async def run_step(self, previous_turn_response: Optional[str]) -> str:
         """Run one auditing step"""
@@ -107,7 +92,10 @@ class Auditor(ConversationParticipant):
         else:
             user_message = previous_turn_response
 
-        return await self._generate_response(user_message)
+        output = await self._generate_response(user_message)
+        if "<think>" in output:
+            output = output.split("</think>")[-1].strip()
+        return output
 
 
 class Agent(ConversationParticipant):
@@ -119,11 +107,9 @@ class Agent(ConversationParticipant):
         model_id: str,
         api: InferenceAPI,
         system_prompt: str,
-        validation_fn: Optional[ValidationProtocol] = None,
+        **kwargs,
     ):
-        super().__init__(
-            name=name, model_id=model_id, api=api, system_prompt=system_prompt, validation_fn=validation_fn
-        )
+        super().__init__(name=name, model_id=model_id, api=api, system_prompt=system_prompt, **kwargs)
 
     async def run_step(self, previous_turn_response: str) -> str:
         """Run one agent response step"""
