@@ -136,7 +136,7 @@ class TargetBehavior:
         return cleaned_ideas
 
     async def generate_ideas(self):
-        prompt = load_prompt_file(get_project_root() / "prompts" / "idea_generator.jinja2")
+        prompt = load_prompt_file(get_project_root() / "prompts" / "automated_auditing" / "idea_generator.jinja2")
         prompt = prompt.replace("{NUM_IDEAS}", str(self.num_ideas)).replace(
             "{BEHAVIOR_TO_ANALYZE}", self.behavior_to_analyze
         )
