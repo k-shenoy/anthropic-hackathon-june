@@ -60,3 +60,13 @@ def load_prompt_file(prompt_path: str | Path, **template_vars) -> str:
         print(f"Relative path: {relative_path}")
         print(f"Normalized path: {path_str}")
         raise
+
+
+def convert_to_json(chat_messages: list[ChatMessage]) -> list[dict]:
+    return [
+        {
+            "role": message.role.value,
+            "content": message.content,
+        }
+        for message in chat_messages
+    ]
