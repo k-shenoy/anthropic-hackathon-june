@@ -1,8 +1,10 @@
-from typing import Optional, List, Protocol
 from dataclasses import dataclass
-from src.utils import load_prompt_file, get_project_root
+from typing import List, Optional, Protocol
+
 from safetytooling.apis import InferenceAPI
-from safetytooling.data_models import ChatMessage, Prompt, MessageRole
+from safetytooling.data_models import ChatMessage, MessageRole, Prompt
+
+from src.utils import get_project_root, load_prompt_file
 
 
 @dataclass
