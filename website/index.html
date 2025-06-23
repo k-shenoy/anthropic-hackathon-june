@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Model Conversation Transcript Viewer</h1>
+            <p>Review problematic model conversations and their analysis</p>
+        </header>
+
+        <main>
+            <div class="controls-panel">
+                <div class="file-selector">
+                    <h2>Transcript Browser</h2>
+                    <div class="controls-row">
+                        <div class="sort-controls">
+                            <label for="sortBy">Sort by:</label>
+                            <select id="sortBy">
+                                <option value="final_severity">Final Severity</option>
+                                <option value="reasoning_severity">Reasoning Severity</option>
+                                <option value="output_severity">Output Severity</option>
+                                <option value="overall_detection">Overall Detection</option>
+                                <option value="behaviorType">Behavior Type</option>
+                                <option value="behavior_description">Behavior Description</option>
+                                <option value="timestamp">Timestamp</option>
+                                <option value="filename">Filename</option>
+                            </select>
+                            <select id="sortOrder">
+                                <option value="desc">Descending</option>
+                                <option value="asc">Ascending</option>
+                            </select>
+                        </div>
+                        <div class="filter-controls">
+                            <label for="filterBehavior">Behavior:</label>
+                            <select id="filterBehavior">
+                                <option value="">All Types</option>
+                                <option value="Sycophancy">Sycophancy</option>
+                                <option value="Economic Exploitation">Economic Exploitation</option>
+                                <option value="Power Seeking">Power Seeking</option>
+                                <option value="Pro-AI Bias">Pro-AI Bias</option>
+                                <option value="Shutdown Resistance">Shutdown Resistance</option>
+                                <option value="Disempowerment">Disempowerment</option>
+                                <option value="Scheming">Scheming</option>
+                            </select>
+                            <label for="filterDetection">Detection:</label>
+                            <select id="filterDetection">
+                                <option value="">All</option>
+                                <option value="YES">Yes</option>
+                                <option value="NO">No</option>
+                            </select>
+                            <label for="filterSeverity">Min Severity:</label>
+                            <select id="filterSeverity">
+                                <option value="">All</option>
+                                <option value="1">1+</option>
+                                <option value="2">2+</option>
+                                <option value="3">3+</option>
+                                <option value="4">4+</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="transcript-list">
+                        <div id="transcriptCount" class="count-display">Loading transcripts...</div>
+                        <div class="table-container">
+                            <table id="transcriptTable" class="transcript-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="behaviorType">Behavior Type <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="overall_detection">Detection <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="final_severity">Final <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="reasoning_severity">Reasoning <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="output_severity">Output <span class="sort-icon">↕</span></th>
+                                        <th class="sortable" data-sort="filename">File <span class="sort-icon">↕</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transcriptTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area" id="contentArea" style="display: none;">
+                <div class="analysis-panel">
+                    <h3>Analysis Summary</h3>
+                    <div id="analysisContent">
+                        <div class="metadata-section">
+                            <h4>Metadata</h4>
+                            <div class="analysis-item">
+                                <span class="label">Behavior:</span>
+                                <span id="behaviorDescription" class="value">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="label">Timestamp:</span>
+                                <span id="timestamp" class="value">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="evaluation-section">
+                            <h4>Evaluation</h4>
+                            <div class="analysis-item">
+                                <span class="label">Overall Detection:</span>
+                                <span id="overallDetection" class="value">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="label">Final Severity:</span>
+                                <span id="finalSeverity" class="value">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="label">Reasoning Severity:</span>
+                                <span id="reasoningSeverity" class="value">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="label">Output Severity:</span>
+                                <span id="outputSeverity" class="value">-</span>
+                            </div>
+                            <div class="analysis-item">
+                                <span class="label">Confidence:</span>
+                                <span id="confidenceLevel" class="value">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="analysis-item">
+                            <span class="label">Most Concerning:</span>
+                            <div id="mostConcerning" class="description">-</div>
+                        </div>
+                        
+                        <div class="analysis-item">
+                            <span class="label">Systematic Review:</span>
+                            <div id="systematicReview" class="description">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transcript-panel">
+                    <h3>Conversation Transcript</h3>
+                    <div id="transcriptContent" class="transcript">
+                        Select a transcript to view the conversation
+                    </div>
+                </div>
+            </div>
+            
+            <div class="most-concerning-section" id="mostConcerningSection" style="display: none;">
+                <h2>Most Concerning Response</h2>
+                <div id="mostConcerningResponse" class="concerning-response">
+                    <div class="response-header">
+                        <span class="response-index">Response #<span id="concerningIndex">-</span></span>
+                        <span class="response-type">Assistant Response</span>
+                    </div>
+                    <div id="concerningContent" class="response-content">
+                        Select a transcript to view the most concerning response
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
